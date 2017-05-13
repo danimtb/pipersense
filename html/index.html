@@ -1,0 +1,133 @@
+<h1 style="color: #4485b8; text-align: center;">pipersense</h1>
+<p style="text-align: center;"><span class="col-11 text-gray-dark mr-2">Firmware for multisensor devices based on esp8266 boards</span></p>
+<hr />
+<table>
+<tbody>
+<tr>
+	<td>Firmware version:</td>
+	<td><div id="firmware_version"></div></p>
+</tr>
+<tr>
+        <td>Hardware:</td>
+        <td><div id="hardware"></div></p>
+</tr>
+</tbody>
+</table>
+<hr />
+<form action="http://192.168.4.1/submit" method="POST">
+    <p style="text-align: center;"><strong><span style="text-decoration: underline;">Network Settings</span></strong></p>
+    <table style="width: 550px; margin-left: auto; margin-right: auto; height: 182px;">
+        <tbody>
+            <tr style="height: 33.5px;">
+                <td style="width: 275px; height: 33.5px; text-align: right;">WIFI SSID:</td>
+                <td style="width: 275px; text-align: left; height: 33.5px;"><input maxlength="32" name="wifi_ssid" size="30" id="wifi_ssid" /></td>
+            </tr>
+            <tr style="height: 21px;">
+                <td style="width: 275px; height: 21px; text-align: right;">WIFI Password:</td>
+                <td style="width: 275px; text-align: left; height: 21px;"><input maxlength="32" name="wifi_password" size="30" type="text" id="wifi_password" /></td>
+            </tr>
+            <tr style="height: 21px;">
+                <td style="width: 275px; height: 21px; text-align: right;">IP:</td>
+                <td style="width: 275px; height: 21px; text-align: left;"><input maxlength="15" name="ip" size="15" type="text" id="ip" /></td>
+            </tr>
+            <tr style="height: 21px;">
+                <td style="width: 275px; height: 21px; text-align: right;">Gateway:</td>
+                <td style="width: 275px; height: 21px; text-align: left;"><input maxlength="15" name="gateway" size="15" type="text" id="gateway" /></td>
+            </tr>
+            <tr style="height: 21px;">
+                <td style="width: 275px; height: 21px; text-align: right;">Mask:</td>
+                <td style="width: 275px; height: 21px; text-align: left;"><input maxlength="15" name="mask" size="15" type="text" id="mask" /></td>
+            </tr>
+            <tr style="height: 21px;">
+                <td style="width: 275px; text-align: right;">OTA Update Server:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="32" name="ota_server" size="30" type="text" id="ota_server" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <p><strong>&nbsp;</strong></p>
+    <p style="text-align: center;"><strong><span style="text-decoration: underline;">MQTT Settings</span></strong></p>
+    <table style="width: 550px; margin-left: auto; margin-right: auto;">
+        <tbody>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Server:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="32" name="mqtt_server" size="30" type="text" id="mqtt_server" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Port:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="4" name="mqtt_port" size="4" type="text" id="mqtt_port" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Username:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="32" name="mqtt_username" size="30" type="text" id="mqtt_username" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Password:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="32" name="mqtt_password" size="30" type="text" id="mqtt_password" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="text-align: center;">&nbsp;</p>
+    <p style="text-align: center;"><strong><span style="text-decoration: underline;">Device Data<br /></span></strong></p>
+    <table style="width: 550px; margin-left: auto; margin-right: auto;">
+        <tbody>
+            <tr>
+                <td style="width: 275px; text-align: right;">Device Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="15" name="device_name" size="30" type="text" id="device_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Status Topic:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status" size="30" type="text" id="mqtt_status" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Command Topic:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_command" size="30" type="text" id="mqtt_command" /></td>
+            </tr>
+            <script>
+
+            	function GetAsync(url, callback)
+				{
+				    var xmlHttp = new XMLHttpRequest();
+				    xmlHttp.onreadystatechange = function() { 
+				        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+				            callback(xmlHttp.responseText);
+				    }
+				    xmlHttp.open("GET", url, true);
+				    xmlHttp.send(null);
+				}
+                
+                window.onload = function() {
+                
+                	GetAsync("http://192.168.4.1/data", function(response) {
+
+                		var data = JSON.parse(response);
+
+	                	document.getElementById("wifi_ssid").value = data.wifi_ssid;
+	                    document.getElementById("wifi_password").value = data.wifi_password;
+	                    document.getElementById("ip").value = data.ip;
+	                    document.getElementById("gateway").value = data.gateway;
+	                    document.getElementById("mask").value = data.mask;
+
+	                    document.getElementById("mqtt_server").value = data.mqtt_server;
+	                    document.getElementById("mqtt_port").value = data.mqtt_port;
+	                    document.getElementById("mqtt_username").value = data.mqtt_username;
+	                    document.getElementById("mqtt_password").value = data.mqtt_password;
+	                
+	                    document.getElementById("device_name").value = data.device_name;
+	                    document.getElementById("ota_server").value = data.ota_server;
+	                    document.getElementById("mqtt_status").value = data.mqtt_status;
+	                    document.getElementById("mqtt_command").value = data.mqtt_command;
+
+	                    document.getElementById("firmware_version").innerHTML = data.firmware_version;
+                            document.getElementById("hardware").innerHTML = data.hardware;
+
+                	});
+                }
+                
+            </script>
+        </tbody>
+    </table>
+    <p><strong>&nbsp;</strong></p>
+    <p style="text-align: center;"><input name="save_button" type="submit" value="Save Settings"></input></p>
+</form>
+<hr />
+<p style="text-align: center;"><em><a href="https://github.com/danimtb/pipersense">danimtb@pipersense</a></em></p>
