@@ -33,8 +33,8 @@
 #define RELAY2_PIN 13
 #define LED_PIN 16
 #define LED_MODE LED_HIGH_LVL
-#define PIR_PIN 4
-#define LDR_PIN adcpin
+#define PIR_PIN 5
+#define LDR_PIN A0
 #define DHT_PIN 14
 #endif
 
@@ -49,7 +49,7 @@ Relay relay1;
 Relay relay2;
 Button button;
 LED led;
-PIR pir(PIR_PIN, 300000);
+PIR pir(PIR_PIN, 5000);
 DHT dht(DHT_PIN, DHT22);
 SimpleTimer dhtTimer;
 
@@ -336,7 +336,7 @@ void setup()
 
     //Configure PIR
     pir.setRisingEdgeCallback(motionDetected);
-    pir.setRisingEdgeCallback(motionNotDetected);
+    pir.setFallingEdgeCallback(motionNotDetected);
 
     //Configure DHT
     dht.begin();
