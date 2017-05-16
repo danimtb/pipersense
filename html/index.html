@@ -75,12 +75,16 @@
                 <td style="width: 275px; text-align: left;"><input maxlength="15" name="device_name" size="30" type="text" id="device_name" /></td>
             </tr>
             <tr>
-                <td style="width: 275px; text-align: right;">MQTT Status Topic:</td>
-                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status" size="30" type="text" id="mqtt_status" /></td>
+                <td style="width: 275px; text-align: right;">MQTT Status Relay 1:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_relay1" size="30" type="text" id="mqtt_status_relay1" /></td>
             </tr>
             <tr>
-                <td style="width: 275px; text-align: right;">MQTT Command Topic:</td>
-                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_command" size="30" type="text" id="mqtt_command" /></td>
+                <td style="width: 275px; text-align: right;">MQTT Status Relay 2:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_relay2" size="30" type="text" id="mqtt_status_relay2" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Status Sensors:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_sensors" size="30" type="text" id="mqtt_status_sensors" /></td>
             </tr>
             <script>
 
@@ -114,8 +118,9 @@
 	                
 	                    document.getElementById("device_name").value = data.device_name;
 	                    document.getElementById("ota_server").value = data.ota_server;
-	                    document.getElementById("mqtt_status").value = data.mqtt_status;
-	                    document.getElementById("mqtt_command").value = data.mqtt_command;
+	                    document.getElementById("mqtt_status_relay1").value = data.mqtt_status_relay1;
+	                    document.getElementById("mqtt_status_relay2").value = data.mqtt_status_relay2;
+                        document.getElementById("mqtt_status_sensors").value = data.mqtt_status_sensors;
 
 	                    document.getElementById("firmware_version").innerHTML = data.firmware_version;
                             document.getElementById("hardware").innerHTML = data.hardware;
