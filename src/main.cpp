@@ -51,6 +51,7 @@ Button button;
 LED led;
 PIR pir(PIR_PIN, 300000);
 DHT dht(DHT_PIN, DHT22);
+SimpleTimer dhtTimer;
 
 
 std::string wifi_ssid = dataManager.getWifiSSID();
@@ -64,9 +65,17 @@ std::string mqtt_port = dataManager.getMqttPort();
 std::string mqtt_username = dataManager.getMqttUser();
 std::string mqtt_password = dataManager.getMqttPass();
 std::string device_name = dataManager.getDeviceName();
-std::string mqtt_status = dataManager.getMqttTopic(0);
-std::string mqtt_command = dataManager.getMqttTopic(1);
-std::string mqtt_secondary = dataManager.getMqttTopic(2);
+
+std::string mqtt_status_relay1 = dataManager.getMqttTopic(0);
+std::string mqtt_command_relay1 = mqtt_status_relay1 + "/set";
+
+std::string mqtt_status_relay2 = dataManager.getMqttTopic(1);
+std::string mqtt_command_relay2 = mqtt_status_relay2 + "/set";
+
+std::string mqtt_status_sensors = dataManager.getMqttTopic(2);
+std::string mqtt_status_motion = mqtt_status_sensors + "/motion";
+std::string mqtt_status_temperature = mqtt_status_sensors + "/temperature";
+std::string mqtt_status_humidity = mqtt_status_sensors + "/humidity";
 
 
 std::vector<std::pair<std::string, std::string>> getWebServerData()
@@ -119,16 +128,16 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
     generic_pair.second = device_name;
     webServerData.push_back(generic_pair);
 
-    generic_pair.first = "mqtt_status";
-    generic_pair.second = mqtt_status;
+    generic_pair.first = "mqtt_status_relay1";
+    generic_pair.second = mqtt_status_relay1;
     webServerData.push_back(generic_pair);
 
-    generic_pair.first = "mqtt_command";
-    generic_pair.second = mqtt_command;
+    generic_pair.first = "mqtt_status_relay2";
+    generic_pair.second = mqtt_status_relay2;
     webServerData.push_back(generic_pair);
 
-    generic_pair.first = "mqtt_secondary";
-    generic_pair.second = mqtt_secondary;
+    generic_pair.first = "mqtt_status_sensors";
+    generic_pair.second = mqtt_status_sensors;
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "firmware_version";
@@ -158,34 +167,62 @@ void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsConte
     dataManager.setMqttUser(inputFieldsContent["mqtt_username"]);
     dataManager.setMqttPass(inputFieldsContent["mqtt_password"]);
     dataManager.setDeviceName(inputFieldsContent["device_name"]);
-    dataManager.setMqttTopic(0, inputFieldsContent["mqtt_status"]);
-    dataManager.setMqttTopic(1, inputFieldsContent["mqtt_command"]);
-    dataManager.setMqttTopic(2, inputFieldsContent["mqtt_secondary"]);
+    dataManager.setMqttTopic(0, inputFieldsContent["mqtt_status_relay1"]);
+    dataManager.setMqttTopic(1, inputFieldsContent["mqtt_status_relay2"]);
+    dataManager.setMqttTopic(2, inputFieldsContent["mqtt_status_sensors"]);
 
     ESP.restart(); // Restart device with new config
 }
 
 void MQTTcallback(std::string topicString, std::string payloadString)
 {
-    if (topicString == mqtt_command)
+    Serial.println(topicString.c_str());
+
+    if (topicString == mqtt_command_relay1)
     {
         if (payloadString == "ON")
         {
             Serial.println("ON");
             relay1.on();
-            mqttManager.publishMQTT(mqtt_status, "ON");
+            mqttManager.publishMQTT(mqtt_status_relay1, "ON");
         }
         else if (payloadString == "OFF")
         {
             Serial.println("OFF");
             relay1.off();
-            mqttManager.publishMQTT(mqtt_status, "OFF");
+            mqttManager.publishMQTT(mqtt_status_relay1, "OFF");
         }
         else if (payloadString == "TOGGLE")
         {
             Serial.println("TOGGLE");
             relay1.commute();
-            mqttManager.publishMQTT(mqtt_status, relay1.getState() ? "ON" : "OFF");
+            mqttManager.publishMQTT(mqtt_status_relay1, relay1.getState() ? "ON" : "OFF");
+        }
+        else
+        {
+            Serial.print("MQTT payload unknown: ");
+            Serial.println(payloadString.c_str());
+        }
+    }
+    else if (topicString == mqtt_command_relay2)
+    {
+        if (payloadString == "ON")
+        {
+            Serial.println("ON");
+            relay2.on();
+            mqttManager.publishMQTT(mqtt_status_relay2, "ON");
+        }
+        else if (payloadString == "OFF")
+        {
+            Serial.println("OFF");
+            relay2.off();
+            mqttManager.publishMQTT(mqtt_status_relay2, "OFF");
+        }
+        else if (payloadString == "TOGGLE")
+        {
+            Serial.println("TOGGLE");
+            relay2.commute();
+            mqttManager.publishMQTT(mqtt_status_relay2, relay2.getState() ? "ON" : "OFF");
         }
         else
         {
@@ -196,7 +233,6 @@ void MQTTcallback(std::string topicString, std::string payloadString)
     else
     {
         Serial.print("MQTT topic unknown:");
-        Serial.println(topicString.c_str());
     }
 }
 
@@ -204,17 +240,15 @@ void shortPress()
 {
     Serial.println("button.shortPress()");
     relay1.commute();
-
-    mqttManager.publishMQTT(mqtt_status, relay1.getState() ? "ON" : "OFF");
+    mqttManager.publishMQTT(mqtt_status_relay1, relay1.getState() ? "ON" : "OFF");
 }
 
 void longPress()
 {
     Serial.println("button.longPress()");
-
     relay2.commute();
 
-    mqttManager.publishMQTT(mqtt_status, relay2.getState() ? "ON" : "OFF");
+    mqttManager.publishMQTT(mqtt_status_relay2, relay2.getState() ? "ON" : "OFF");
 }
 
 void longlongPress()
@@ -236,7 +270,17 @@ void longlongPress()
     }
 }
 
+void motionDetected()
+{
+    Serial.println("motionDetected()");
+    mqttManager.publishMQTT(mqtt_status_motion, "ON");
+}
 
+void motionNotDetected()
+{
+    Serial.println("motionNotDetected()");
+    mqttManager.publishMQTT(mqtt_status_motion, "OFF");
+}
 
 void setup()
 {
@@ -269,10 +313,14 @@ void setup()
     // Configure MQTT
     mqttManager.setCallback(MQTTcallback);
     mqttManager.setup(mqtt_server, mqtt_port.c_str(), mqtt_username, mqtt_password);
-    mqttManager.setLastWillMQTT(mqtt_status, "OFF");
+    mqttManager.setLastWillMQTT(mqtt_command_relay1, "OFF");
     mqttManager.setDeviceData(device_name, HARDWARE, ip, FIRMWARE, FIRMWARE_VERSION);
-    mqttManager.addStatusTopic(mqtt_status);
-    mqttManager.addSubscribeTopic(mqtt_command);
+    mqttManager.addStatusTopic(mqtt_status_relay1);
+    mqttManager.addStatusTopic(mqtt_status_relay2);
+    mqttManager.addStatusTopic(mqtt_status_motion);
+    mqttManager.addStatusTopic(mqtt_status_humidity);
+    mqttManager.addSubscribeTopic(mqtt_command_relay1);
+    mqttManager.addSubscribeTopic(mqtt_command_relay2);
     mqttManager.startConnection();
 
     //Configure WebServer
@@ -285,6 +333,14 @@ void setup()
 
     // UpdateManager setup
     updateManager.setup(ota, FIRMWARE, FIRMWARE_VERSION, HARDWARE);
+
+    //Configure PIR
+    pir.setRisingEdgeCallback(motionDetected);
+    pir.setRisingEdgeCallback(motionNotDetected);
+
+    //Configure DHT
+    dht.begin();
+    dhtTimer.setup(RT_ON, 30000);
 }
 
 void loop()
@@ -294,6 +350,21 @@ void loop()
 
     // Check Wifi status
     wifiManager.loop();
+
+    // Check PIR sensor
+    pir.loop();
+
+    // Check DHT sensor
+    if (dhtTimer.check())
+    {
+        float humidity = dht.readHumidity();
+        float temperature = dht.readTemperature();
+
+        mqttManager.publishMQTT(mqtt_status_humidity, humidity);
+        mqttManager.publishMQTT(mqtt_status_temperature, temperature);
+
+        dhtTimer.start();
+    }
 
     // Check MQTT status and OTA Updates
     if (wifiManager.connected())
