@@ -59,7 +59,7 @@ std::string wifi_password = dataManager.get("wifi_password");
 std::string ip = dataManager.get("ip");
 std::string mask = dataManager.get("mask");
 std::string gateway = dataManager.get("gateway");
-std::string ota = dataManager.get("ota_server");
+std::string ota_server = dataManager.get("ota_server");
 std::string mqtt_server = dataManager.get("mqtt_server");
 std::string mqtt_port = dataManager.get("mqtt_port");
 std::string mqtt_username = dataManager.get("mqtt_username");
@@ -105,7 +105,7 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "ota_server";
-    generic_pair.second = ota;
+    generic_pair.second = ota_server;
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "mqtt_server";
@@ -333,7 +333,7 @@ void setup()
     ArduinoOTA.begin();
 
     // UpdateManager setup
-    updateManager.setup(ota, FIRMWARE, FIRMWARE_VERSION, HARDWARE);
+    updateManager.setup(ota_server, FIRMWARE, FIRMWARE_VERSION, HARDWARE);
 
     //Configure PIR
     pir.setRisingEdgeCallback(motionDetected);
