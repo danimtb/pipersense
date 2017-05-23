@@ -49,30 +49,30 @@ Relay relay1;
 Relay relay2;
 Button button;
 LED led;
-PIR pir(PIR_PIN, 5000);
+PIR pir(PIR_PIN, 0);
 DHT dht(DHT_PIN, DHT22);
 SimpleTimer dhtTimer;
 
 
-std::string wifi_ssid = dataManager.getWifiSSID();
-std::string wifi_password = dataManager.getWifiPass();
-std::string ip = dataManager.getIP();
-std::string mask = dataManager.getMask();
-std::string gateway = dataManager.getGateway();
-std::string ota = dataManager.getOta();
-std::string mqtt_server = dataManager.getMqttServer();
-std::string mqtt_port = dataManager.getMqttPort();
-std::string mqtt_username = dataManager.getMqttUser();
-std::string mqtt_password = dataManager.getMqttPass();
-std::string device_name = dataManager.getDeviceName();
+std::string wifi_ssid = dataManager.get("wifi_ssid");
+std::string wifi_password = dataManager.get("wifi_password");
+std::string ip = dataManager.get("ip");
+std::string mask = dataManager.get("mask");
+std::string gateway = dataManager.get("gateway");
+std::string ota = dataManager.get("ota_server");
+std::string mqtt_server = dataManager.get("mqtt_server");
+std::string mqtt_port = dataManager.get("mqtt_port");
+std::string mqtt_username = dataManager.get("mqtt_username");
+std::string mqtt_password = dataManager.get("mqtt_password");
+std::string device_name = dataManager.get("device_name");
 
-std::string mqtt_status_relay1 = dataManager.getMqttTopic(0);
+std::string mqtt_status_relay1 = dataManager.get("mqtt_status_relay1");
 std::string mqtt_command_relay1 = mqtt_status_relay1 + "/set";
 
-std::string mqtt_status_relay2 = dataManager.getMqttTopic(1);
+std::string mqtt_status_relay2 = dataManager.get("mqtt_status_relay2");
 std::string mqtt_command_relay2 = mqtt_status_relay2 + "/set";
 
-std::string mqtt_status_sensors = dataManager.getMqttTopic(2);
+std::string mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
 std::string mqtt_status_motion = mqtt_status_sensors + "/motion";
 std::string mqtt_status_temperature = mqtt_status_sensors + "/temperature";
 std::string mqtt_status_humidity = mqtt_status_sensors + "/humidity";
@@ -154,22 +154,23 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
 void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsContent)
 {
     //Save config to dataManager
-    Serial.println("webServerSubmitCallback");
+    Serial.println("webServerSubmitCallback()");
 
-    dataManager.setWifiSSID(inputFieldsContent["wifi_ssid"]);
-    dataManager.setWifiPass(inputFieldsContent["wifi_password"]);
-    dataManager.setIP(inputFieldsContent["ip"]);
-    dataManager.setMask(inputFieldsContent["mask"]);
-    dataManager.setGateway(inputFieldsContent["gateway"]);
-    dataManager.setOta(inputFieldsContent["ota_server"]);
-    dataManager.setMqttServer(inputFieldsContent["mqtt_server"]);
-    dataManager.setMqttPort(inputFieldsContent["mqtt_port"]);
-    dataManager.setMqttUser(inputFieldsContent["mqtt_username"]);
-    dataManager.setMqttPass(inputFieldsContent["mqtt_password"]);
-    dataManager.setDeviceName(inputFieldsContent["device_name"]);
-    dataManager.setMqttTopic(0, inputFieldsContent["mqtt_status_relay1"]);
-    dataManager.setMqttTopic(1, inputFieldsContent["mqtt_status_relay2"]);
-    dataManager.setMqttTopic(2, inputFieldsContent["mqtt_status_sensors"]);
+    dataManager.set("wifi_ssid", inputFieldsContent["wifi_ssid"]);
+    dataManager.set("wifi_password", inputFieldsContent["wifi_password"]);
+    dataManager.set("ip", inputFieldsContent["ip"]);
+    dataManager.set("mask", inputFieldsContent["mask"]);
+    dataManager.set("gateway", inputFieldsContent["gateway"]);
+    dataManager.set("ota_server", inputFieldsContent["ota_server"]);
+    dataManager.set("mqtt_server", inputFieldsContent["mqtt_server"]);
+    dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
+    dataManager.set("mqtt_username", inputFieldsContent["mqtt_username"]);
+    dataManager.set("mqtt_password", inputFieldsContent["mqtt_password"]);
+    dataManager.set("device_name", inputFieldsContent["device_name"]);
+    dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
+    dataManager.set("mqtt_status_relay1", inputFieldsContent["mqtt_status_relay1"]);
+    dataManager.set("mqtt_status_relay2", inputFieldsContent["mqtt_status_relay2"]);
+    dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
 
     ESP.restart(); // Restart device with new config
 }
