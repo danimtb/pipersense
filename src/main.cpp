@@ -28,13 +28,13 @@
 
 #ifdef ENABLE_NODEMCU
 #define HARDWARE "nodemcu"
-#define BUTTON_PIN D9
-#define LED_PIN D0
-#define LED_MODE LED_HIGH_LVL
+#define BUTTON_PIN 4
+//#define LED_PIN D0
+//#define LED_MODE LED_HIGH_LVL
 #define RGBLED_RED_PIN D1
 #define RGBLED_GREEN_PIN D2
 #define RGBLED_BLUE_PIN D3
-#define PIR_PIN D5
+#define PIR_PIN 5
 #define LDR_PIN A0
 #define DHT_PIN D7
 #endif
@@ -53,7 +53,6 @@ LED led;
 PIR pir(PIR_PIN, 0);
 DHT dht(DHT_PIN, DHT22);
 SimpleTimer dhtTimer;
-
 
 std::string wifi_ssid = dataManager.get("wifi_ssid");
 std::string wifi_password = dataManager.get("wifi_password");
@@ -222,7 +221,7 @@ void setup()
     Serial.begin(115200);
 
     // Configure Button
-    button.setup(BUTTON_PIN, PULLDOWN);
+    button.setup(BUTTON_PIN, ButtonType::PULLUP_INTERNAL);
     button.setShortPressCallback(shortPress);
     button.setLongPressCallback(longPress);
     button.setLongLongPressCallback(longlongPress);
