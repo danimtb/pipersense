@@ -5,15 +5,14 @@
 #include <ArduinoOTA.h>
 #include <DHT.h>
 
-#include "../lib/Relay/Relay.h"
-#include "../lib/LED/LED.h"
 #include "../lib/Button/Button.h"
-#include "../lib/PIR/PIR.h"
 #include "../lib/DataManager/DataManager.h"
 #include "../lib/MqttManager/MqttManager.h"
+#include "../lib/PIR/PIR.h"
+#include "../lib/RgbLED/RgbLED.h"
+#include "../lib/UpdateManager/UpdateManager.h"
 #include "../lib/WifiManager/WifiManager.h"
 #include "../lib/WebServer/WebServer.h"
-#include "../lib/UpdateManager/UpdateManager.h"
 
 
 //#################### FIRMWARE ####################
@@ -27,32 +26,29 @@
 //################## HARDWARE ##################
 
 #ifdef ENABLE_NODEMCU
-#define HARDWARE "nodemcu"
+#define HARDWARE "nodemcuv2"
 #define BUTTON_PIN 4
-//#define LED_PIN D0
-//#define LED_MODE LED_HIGH_LVL
-#define RGBLED_RED_PIN D1
-#define RGBLED_GREEN_PIN D2
-#define RGBLED_BLUE_PIN D3
+#define RGBLED_RED_PIN 14
+#define RGBLED_GREEN_PIN 12
+#define RGBLED_BLUE_PIN 13
 #define PIR_PIN 5
 #define LDR_PIN A0
-#define DHT_PIN D7
+#define DHT_PIN 0
 #endif
 
 //################## ============ ##################
 
 
-UpdateManager updateManager;
-DataManager dataManager;
-WifiManager wifiManager;
-MqttManager mqttManager;
-Relay relay1;
-Relay relay2;
 Button button;
-LED led;
-PIR pir(PIR_PIN, 0);
-DHT dht(DHT_PIN, DHT22);
+DataManager dataManager;
+DHT dht(DHT_PIN, DHT11);
+MqttManager mqttManager;
+PIR pir(PIR_PIN, 300000);
+RgbLED rgbLED;
 SimpleTimer dhtTimer;
+UpdateManager updateManager;
+WifiManager wifiManager;
+
 
 std::string wifi_ssid = dataManager.get("wifi_ssid");
 std::string wifi_password = dataManager.get("wifi_password");
@@ -226,12 +222,7 @@ void setup()
     button.setLongPressCallback(longPress);
     button.setLongLongPressCallback(longlongPress);
 
-    #ifdef LED_PIN
-        led.setup(LED_PIN, LED_MODE);
-        led.on();
-        delay(300);
-        led.off();
-    #endif
+    rgbLED.setup(RGBLED_RED_PIN, RGBLED_GREEN_PIN, RGBLED_BLUE_PIN);
 
     // Configure Wifi
     wifiManager.setup(wifi_ssid, wifi_password, ip, mask, gateway, HARDWARE);
@@ -303,18 +294,16 @@ void loop()
     }
 
     // LED Status
-    #ifdef LED_PIN
-        if (mqttManager.connected())
-        {
-            led.on();
-        }
-        else if(wifiManager.apModeEnabled())
-        {
-            led.blink(1000);
-        }
-        else
-        {
-            led.off();
-        }
-    #endif
+    if (mqttManager.connected())
+    {
+        rgbLED.on();
+    }
+    else if(wifiManager.apModeEnabled())
+    {
+        rgbLED.off();
+    }
+    else
+    {
+        rgbLED.off();
+    }
 }
