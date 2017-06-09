@@ -170,29 +170,38 @@ void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsConte
 
 void publishStateRgbLED()
 {
-    DynamicJsonBuffer dynamicJsonBuffer;
+    Serial.println("publishStateRgbLED()");
+
+    StaticJsonBuffer<200> dynamicJsonBuffer;
     JsonObject& root = dynamicJsonBuffer.createObject();
     String jsonString;
 
-    root["state"] =  rgbLED.getState() ? "ON" : "OFF";
-    JsonObject& color = root.createNestedObject("color");
-    color["r"] = rgbLED.getColor().red;
-    color["g"] = rgbLED.getColor().green;
-    color["b"] = rgbLED.getColor().blue;
+    if (rgbLED.getState())
+    {
+        root["state"] = "ON";
+
+        JsonObject& color = root.createNestedObject("color");
+        color["r"] = rgbLED.getColor().red;
+        color["g"] = rgbLED.getColor().green;
+        color["b"] = rgbLED.getColor().blue;
+    }
+    else
+    {
+        root["state"] = "OFF";
+    }
 
     root.printTo(jsonString);
-
     mqttManager.publishMQTT(mqtt_status_led, jsonString.c_str());
 }
 
 void MQTTcallback(std::string topicString, std::string payloadString)
 {
+    Serial.print("MQTTcallback(): ");
     Serial.println(topicString.c_str());
 
     if (topicString == mqtt_command_led)
     {
-        DynamicJsonBuffer jsonBuffer;
-
+        StaticJsonBuffer<200> jsonBuffer;
         JsonObject& root = jsonBuffer.parseObject(payloadString.c_str());
 
         if (root.containsKey("state"))
@@ -200,7 +209,7 @@ void MQTTcallback(std::string topicString, std::string payloadString)
             String state = root["state"];
             std::string stateString(state.c_str());
 
-            if (state == "ON")
+            if (stateString == "ON")
             {
                 rgbLED.on();
             }
@@ -216,14 +225,22 @@ void MQTTcallback(std::string topicString, std::string payloadString)
             uint8_t green = root["color"]["g"];
             uint8_t blue = root["color"]["b"];
 
-            rgbLED.setColor(red, green, blue);
+            if (root.containsKey("transition"))
+            {
+                uint16_t seconds = root["transition"];
+                rgbLED.setColor(red, green, blue, seconds);
+            }
+            else
+            {
+                rgbLED.setColor(red, green, blue);
+            }
         }
 
         publishStateRgbLED();
     }
     else
     {
-        Serial.print("MQTT topic unknown:");
+        Serial.print("MQTT topic unknown");
     }
 }
 
@@ -355,16 +372,6 @@ void loop()
     }
 
     // LED Status
-    if (mqttManager.connected())
-    {
-        rgbLED.on();
-    }
-    else if(wifiManager.apModeEnabled())
-    {
-        rgbLED.off();
-    }
-    else
-    {
-        rgbLED.off();
-    }
+    rgbLED.loop();
+
 }
