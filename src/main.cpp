@@ -4,6 +4,7 @@
 
 #include <ArduinoOTA.h>
 #include <DHT.h>
+#include <ArduinoJson.h>
 
 #include "../lib/Button/Button.h"
 #include "../lib/DataManager/DataManager.h"
@@ -61,10 +62,13 @@ std::string mqtt_port = dataManager.get("mqtt_port");
 std::string mqtt_username = dataManager.get("mqtt_username");
 std::string mqtt_password = dataManager.get("mqtt_password");
 std::string device_name = dataManager.get("device_name");
+std::string mqtt_status_led = dataManager.get("mqtt_status_led");
+std::string mqtt_command_led = dataManager.get("mqtt_command_led");
 std::string mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
 std::string mqtt_status_motion = mqtt_status_sensors + "/motion";
 std::string mqtt_status_temperature = mqtt_status_sensors + "/temperature";
 std::string mqtt_status_humidity = mqtt_status_sensors + "/humidity";
+std::string mqtt_status_illuminance = mqtt_status_sensors + "/illuminance";
 
 
 std::vector<std::pair<std::string, std::string>> getWebServerData()
@@ -117,6 +121,14 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
     generic_pair.second = device_name;
     webServerData.push_back(generic_pair);
 
+    generic_pair.first = "mqtt_status_led";
+    generic_pair.second = mqtt_status_led;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "mqtt_command_led";
+    generic_pair.second = mqtt_command_led;
+    webServerData.push_back(generic_pair);
+
     generic_pair.first = "mqtt_status_sensors";
     generic_pair.second = mqtt_status_sensors;
     webServerData.push_back(generic_pair);
@@ -149,25 +161,70 @@ void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsConte
     dataManager.set("mqtt_password", inputFieldsContent["mqtt_password"]);
     dataManager.set("device_name", inputFieldsContent["device_name"]);
     dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
+    dataManager.set("mqtt_status_led", inputFieldsContent["mqtt_status_led"]);
+    dataManager.set("mqtt_command_led", inputFieldsContent["mqtt_command_led"]);
     dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
 
     ESP.restart(); // Restart device with new config
+}
+
+void publishStateRgbLED()
+{
+    DynamicJsonBuffer dynamicJsonBuffer;
+    JsonObject& root = dynamicJsonBuffer.createObject();
+    String jsonString;
+
+    root["state"] =  rgbLED.getState() ? "ON" : "OFF";
+    JsonObject& color = root.createNestedObject("color");
+    color["r"] = rgbLED.getColor().red;
+    color["g"] = rgbLED.getColor().green;
+    color["b"] = rgbLED.getColor().blue;
+
+    root.printTo(jsonString);
+
+    mqttManager.publishMQTT(mqtt_status_led, jsonString.c_str());
 }
 
 void MQTTcallback(std::string topicString, std::string payloadString)
 {
     Serial.println(topicString.c_str());
 
-//        else
-//        {
-//            Serial.print("MQTT payload unknown: ");
-//            Serial.println(payloadString.c_str());
-//        }
-//    }
-//    else
-//    {
-//        Serial.print("MQTT topic unknown:");
-//    }
+    if (topicString == mqtt_command_led)
+    {
+        DynamicJsonBuffer jsonBuffer;
+
+        JsonObject& root = jsonBuffer.parseObject(payloadString.c_str());
+
+        if (root.containsKey("state"))
+        {
+            String state = root["state"];
+            std::string stateString(state.c_str());
+
+            if (state == "ON")
+            {
+                rgbLED.on();
+            }
+            else
+            {
+                rgbLED.off();
+            }
+        }
+
+        if (root.containsKey("color"))
+        {
+            uint8_t red = root["color"]["r"];
+            uint8_t green = root["color"]["g"];
+            uint8_t blue = root["color"]["b"];
+
+            rgbLED.setColor(red, green, blue);
+        }
+
+        publishStateRgbLED();
+    }
+    else
+    {
+        Serial.print("MQTT topic unknown:");
+    }
 }
 
 void shortPress()
@@ -232,8 +289,12 @@ void setup()
     mqttManager.setCallback(MQTTcallback);
     mqttManager.setup(mqtt_server, mqtt_port.c_str(), mqtt_username, mqtt_password);
     mqttManager.setDeviceData(device_name, HARDWARE, ip, FIRMWARE, FIRMWARE_VERSION);
+    mqttManager.addSubscribeTopic(mqtt_command_led);
+    mqttManager.addStatusTopic(mqtt_status_led);
     mqttManager.addStatusTopic(mqtt_status_motion);
+    mqttManager.addStatusTopic(mqtt_status_temperature);
     mqttManager.addStatusTopic(mqtt_status_humidity);
+    mqttManager.addStatusTopic(mqtt_status_illuminance);
     mqttManager.startConnection();
 
     //Configure WebServer
