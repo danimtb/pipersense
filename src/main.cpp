@@ -11,6 +11,7 @@
 #include "../lib/MqttManager/MqttManager.h"
 #include "../lib/PIR/PIR.h"
 #include "../lib/RgbLED/RgbLED.h"
+#include "../lib/TEMT6000/TEMT6000.h"
 #include "../lib/UpdateManager/UpdateManager.h"
 #include "../lib/WifiManager/WifiManager.h"
 #include "../lib/WebServer/WebServer.h"
@@ -47,6 +48,7 @@ MqttManager mqttManager;
 PIR pir(PIR_PIN, 300000);
 RgbLED rgbLED;
 SimpleTimer dhtTimer;
+TEMT6000 temt6000;
 UpdateManager updateManager;
 WifiManager wifiManager;
 
@@ -194,6 +196,12 @@ void publishStateRgbLED()
     mqttManager.publishMQTT(mqtt_status_led, jsonString.c_str());
 }
 
+void onLuxChangeCallback(float lux)
+{
+    Serial.println("onLuxChangeCallback()");
+    mqttManager.publishMQTT(mqtt_status_illuminance, lux);
+}
+
 void MQTTcallback(std::string topicString, std::string payloadString)
 {
     Serial.print("MQTTcallback(): ");
@@ -296,7 +304,12 @@ void setup()
     button.setLongPressCallback(longPress);
     button.setLongLongPressCallback(longlongPress);
 
+    // Configure LED
     rgbLED.setup(RGBLED_RED_PIN, RGBLED_GREEN_PIN, RGBLED_BLUE_PIN);
+
+    // Configure TEMT6000
+    temt6000.setup(LDR_PIN, 3.3);
+    temt6000.setOnChangeCallback(onLuxChangeCallback, 30000);
 
     // Configure Wifi
     wifiManager.setup(wifi_ssid, wifi_password, ip, mask, gateway, HARDWARE);
@@ -374,4 +387,6 @@ void loop()
     // LED Status
     rgbLED.loop();
 
+    // TEMT6000 loop
+    temt6000.loop();
 }
