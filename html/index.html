@@ -79,8 +79,8 @@
                 <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_led" size="30" type="text" id="mqtt_status_led" /></td>
             </tr>
             <tr>
-                <td style="width: 275px; text-align: right;">MQTT Command RGB LED:</td>
-                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_command_led" size="30" type="text" id="mqtt_command_led" /></td>
+                <td style="width: 275px; text-align: right;">MQTT Button Toggle:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_button_toggle" size="30" type="text" id="mqtt_button_toggle" /></td>
             </tr>
             <tr>
                 <td style="width: 275px; text-align: right;">MQTT Status Sensors:</td>
@@ -119,7 +119,7 @@
 	                    document.getElementById("device_name").value = data.device_name;
 	                    document.getElementById("ota_server").value = data.ota_server;
 	                    document.getElementById("mqtt_status_led").value = data.mqtt_status_led;
-	                    document.getElementById("mqtt_command_led").value = data.mqtt_command_led;
+	                    document.getElementById("mqtt_button_toggle").value = data.mqtt_button_toggle;
                         document.getElementById("mqtt_status_sensors").value = data.mqtt_status_sensors;
 
 	                    document.getElementById("firmware_version").innerHTML = data.firmware_version;

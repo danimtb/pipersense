@@ -65,7 +65,8 @@ std::string mqtt_username = dataManager.get("mqtt_username");
 std::string mqtt_password = dataManager.get("mqtt_password");
 std::string device_name = dataManager.get("device_name");
 std::string mqtt_status_led = dataManager.get("mqtt_status_led");
-std::string mqtt_command_led = dataManager.get("mqtt_command_led");
+std::string mqtt_command_led = mqtt_status_led + "/set";
+std::string mqtt_button_toggle = dataManager.get("mqtt_button_toggle");
 std::string mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
 std::string mqtt_status_motion = mqtt_status_sensors + "/motion";
 std::string mqtt_status_temperature = mqtt_status_sensors + "/temperature";
@@ -127,8 +128,8 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
     generic_pair.second = mqtt_status_led;
     webServerData.push_back(generic_pair);
 
-    generic_pair.first = "mqtt_command_led";
-    generic_pair.second = mqtt_command_led;
+    generic_pair.first = "mqtt_button_toggle";
+    generic_pair.second = mqtt_button_toggle;
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "mqtt_status_sensors";
@@ -164,7 +165,7 @@ void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsConte
     dataManager.set("device_name", inputFieldsContent["device_name"]);
     dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
     dataManager.set("mqtt_status_led", inputFieldsContent["mqtt_status_led"]);
-    dataManager.set("mqtt_command_led", inputFieldsContent["mqtt_command_led"]);
+    dataManager.set("mqtt_button_toggle", inputFieldsContent["mqtt_button_toggle"]);
     dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
 
     ESP.restart(); // Restart device with new config
@@ -209,38 +210,45 @@ void MQTTcallback(std::string topicString, std::string payloadString)
 
     if (topicString == mqtt_command_led)
     {
-        StaticJsonBuffer<200> jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(payloadString.c_str());
-
-        if (root.containsKey("state"))
+        if (payloadString == "TOGGLE")
         {
-            String state = root["state"];
-            std::string stateString(state.c_str());
-
-            if (stateString == "ON")
-            {
-                rgbLED.on();
-            }
-            else
-            {
-                rgbLED.off();
-            }
+            rgbLED.commute();
         }
-
-        if (root.containsKey("color"))
+        else
         {
-            uint8_t red = root["color"]["r"];
-            uint8_t green = root["color"]["g"];
-            uint8_t blue = root["color"]["b"];
+            StaticJsonBuffer<200> jsonBuffer;
+            JsonObject& root = jsonBuffer.parseObject(payloadString.c_str());
 
-            if (root.containsKey("transition"))
+            if (root.containsKey("state"))
             {
-                uint16_t seconds = root["transition"];
-                rgbLED.setColor(red, green, blue, seconds);
+                String state = root["state"];
+                std::string stateString(state.c_str());
+
+                if (stateString == "ON")
+                {
+                    rgbLED.on();
+                }
+                else
+                {
+                    rgbLED.off();
+                }
             }
-            else
+
+            if (root.containsKey("color"))
             {
-                rgbLED.setColor(red, green, blue);
+                uint8_t red = root["color"]["r"];
+                uint8_t green = root["color"]["g"];
+                uint8_t blue = root["color"]["b"];
+
+                if (root.containsKey("transition"))
+                {
+                    uint16_t seconds = root["transition"];
+                    rgbLED.setColor(red, green, blue, seconds);
+                }
+                else
+                {
+                    rgbLED.setColor(red, green, blue);
+                }
             }
         }
 
@@ -255,11 +263,14 @@ void MQTTcallback(std::string topicString, std::string payloadString)
 void shortPress()
 {
     Serial.println("button.shortPress()");
+    rgbLED.commute();
+    publishStateRgbLED();
 }
 
 void longPress()
 {
     Serial.println("button.longPress()");
+    mqttManager.publishMQTT(mqtt_button_toggle, "TOGGLE");
 }
 
 void longlongPress()
