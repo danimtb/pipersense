@@ -11,6 +11,7 @@
 #include "../lib/PIR/PIR.h"
 #include "../lib/RgbLED/RgbLED.h"
 #include "../lib/TEMT6000/TEMT6000.h"
+#include "../lib/TimeWatchdog/TimeWatchdog.h"
 #include "../lib/UpdateManager/UpdateManager.h"
 #include "../lib/WifiManager/WifiManager.h"
 #include "../lib/WebServer/WebServer.h"
@@ -48,6 +49,7 @@ PIR pir(PIR_PIN, 300000);
 RgbLED rgbLED;
 SimpleTimer dhtTimer;
 TEMT6000 temt6000;
+TimeWatchdog connectionWatchdog;
 UpdateManager updateManager;
 WifiManager wifiManager;
 
@@ -272,7 +274,15 @@ void longPress()
     mqttManager.publishMQTT(mqtt_button_toggle, "TOGGLE");
 }
 
-void verylongPress()
+void veryLongPress()
+{
+    //Disconnect and Restart device
+    mqttManager.stopConnection();
+    wifiManager.disconnectStaWifi();
+    ESP.restart();
+}
+
+void ultraLongPress()
 {
     Serial.println("button.longlongPress()");
 
@@ -303,6 +313,11 @@ void motionNotDetected()
     mqttManager.publishMQTT(mqtt_status_motion, "OFF");
 }
 
+void connectionWatchdogCallback()
+{
+    ESP.restart();
+}
+
 void setup()
 {
     // Init serial comm
@@ -312,7 +327,8 @@ void setup()
     button.setup(BUTTON_PIN, ButtonType::PULLUP_INTERNAL);
     button.setShortPressCallback(shortPress);
     button.setLongPressCallback(longPress);
-    button.setVeryLongPressCallback(verylongPress);
+    button.setVeryLongPressCallback(veryLongPress);
+    button.setUltraLongPressCallback(ultraLongPress);
 
     // Configure LED
     rgbLED.setup(RGBLED_RED_PIN, RGBLED_GREEN_PIN, RGBLED_BLUE_PIN);
@@ -347,6 +363,9 @@ void setup()
 
     // UpdateManager setup
     updateManager.setup(ota_server, FIRMWARE, FIRMWARE_VERSION, HARDWARE);
+
+    // ConnectionWatchdog setup
+    connectionWatchdog.setup(1200000, connectionWatchdogCallback); //20 min
 
     //Configure PIR
     pir.setRisingEdgeCallback(motionDetected);
@@ -392,6 +411,21 @@ void loop()
     if(wifiManager.apModeEnabled())
     {
         WebServer::getInstance().loop();
+    }
+
+    // ConnectionWatchdog
+    connectionWatchdog.loop();
+
+    if (mqttManager.connected())
+    {
+        connectionWatchdog.init();
+        connectionWatchdog.feed();
+    }
+    else if(wifiManager.apModeEnabled())
+    {
+        connectionWatchdog.deinit();
+
+        rgbLED.setColor(255, 255, 255);
     }
 
     // LED Status
