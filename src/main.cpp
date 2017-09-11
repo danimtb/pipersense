@@ -1,4 +1,3 @@
-#include <string>
 #include <map>
 #include <cstdint>
 
@@ -43,7 +42,7 @@
 
 Button button;
 DataManager dataManager;
-DHT dht(DHT_PIN, DHT11);
+DHT dht(DHT_PIN, DHT22);
 MqttManager mqttManager;
 PIR pir(PIR_PIN, 300000);
 RgbLED rgbLED;
@@ -53,32 +52,32 @@ UpdateManager updateManager;
 WifiManager wifiManager;
 
 
-std::string wifi_ssid = dataManager.get("wifi_ssid");
-std::string wifi_password = dataManager.get("wifi_password");
-std::string ip = dataManager.get("ip");
-std::string mask = dataManager.get("mask");
-std::string gateway = dataManager.get("gateway");
-std::string ota_server = dataManager.get("ota_server");
-std::string mqtt_server = dataManager.get("mqtt_server");
-std::string mqtt_port = dataManager.get("mqtt_port");
-std::string mqtt_username = dataManager.get("mqtt_username");
-std::string mqtt_password = dataManager.get("mqtt_password");
-std::string device_name = dataManager.get("device_name");
-std::string mqtt_status_led = dataManager.get("mqtt_status_led");
-std::string mqtt_command_led = mqtt_status_led + "/set";
-std::string mqtt_button_toggle = dataManager.get("mqtt_button_toggle");
-std::string mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
-std::string mqtt_status_motion = mqtt_status_sensors + "/motion";
-std::string mqtt_status_temperature = mqtt_status_sensors + "/temperature";
-std::string mqtt_status_humidity = mqtt_status_sensors + "/humidity";
-std::string mqtt_status_illuminance = mqtt_status_sensors + "/illuminance";
+String wifi_ssid = dataManager.get("wifi_ssid");
+String wifi_password = dataManager.get("wifi_password");
+String ip = dataManager.get("ip");
+String mask = dataManager.get("mask");
+String gateway = dataManager.get("gateway");
+String ota_server = dataManager.get("ota_server");
+String mqtt_server = dataManager.get("mqtt_server");
+String mqtt_port = dataManager.get("mqtt_port");
+String mqtt_username = dataManager.get("mqtt_username");
+String mqtt_password = dataManager.get("mqtt_password");
+String device_name = dataManager.get("device_name");
+String mqtt_status_led = dataManager.get("mqtt_status_led");
+String mqtt_command_led = mqtt_status_led + "/set";
+String mqtt_button_toggle = dataManager.get("mqtt_button_toggle");
+String mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
+String mqtt_status_motion = mqtt_status_sensors + "/motion";
+String mqtt_status_temperature = mqtt_status_sensors + "/temperature";
+String mqtt_status_humidity = mqtt_status_sensors + "/humidity";
+String mqtt_status_illuminance = mqtt_status_sensors + "/illuminance";
 
 
-std::vector<std::pair<std::string, std::string>> getWebServerData()
+std::vector<std::pair<String, String>> getWebServerData()
 {
-    std::vector<std::pair<std::string, std::string>> webServerData;
+    std::vector<std::pair<String, String>> webServerData;
 
-    std::pair<std::string, std::string> generic_pair;
+    std::pair<String, String> generic_pair;
 
     generic_pair.first = "wifi_ssid";
     generic_pair.second = wifi_ssid;
@@ -147,7 +146,7 @@ std::vector<std::pair<std::string, std::string>> getWebServerData()
     return webServerData;
 }
 
-void webServerSubmitCallback(std::map<std::string, std::string> inputFieldsContent)
+void webServerSubmitCallback(std::map<String, String> inputFieldsContent)
 {
     //Save config to dataManager
     Serial.println("webServerSubmitCallback()");
@@ -203,7 +202,7 @@ void onLuxChangeCallback(float lux)
     mqttManager.publishMQTT(mqtt_status_illuminance, lux);
 }
 
-void MQTTcallback(std::string topicString, std::string payloadString)
+void MQTTcallback(String topicString, String payloadString)
 {
     Serial.print("MQTTcallback(): ");
     Serial.println(topicString.c_str());
@@ -222,7 +221,7 @@ void MQTTcallback(std::string topicString, std::string payloadString)
             if (root.containsKey("state"))
             {
                 String state = root["state"];
-                std::string stateString(state.c_str());
+                String stateString(state.c_str());
 
                 if (stateString == "ON")
                 {
@@ -273,7 +272,7 @@ void longPress()
     mqttManager.publishMQTT(mqtt_button_toggle, "TOGGLE");
 }
 
-void longlongPress()
+void verylongPress()
 {
     Serial.println("button.longlongPress()");
 
@@ -313,7 +312,7 @@ void setup()
     button.setup(BUTTON_PIN, ButtonType::PULLUP_INTERNAL);
     button.setShortPressCallback(shortPress);
     button.setLongPressCallback(longPress);
-    button.setLongLongPressCallback(longlongPress);
+    button.setVeryLongPressCallback(verylongPress);
 
     // Configure LED
     rgbLED.setup(RGBLED_RED_PIN, RGBLED_GREEN_PIN, RGBLED_BLUE_PIN);
