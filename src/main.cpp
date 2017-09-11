@@ -172,7 +172,7 @@ void webServerSubmitCallback(std::map<String, String> inputFieldsContent)
     ESP.restart(); // Restart device with new config
 }
 
-void publishStateRgbLED()
+void publishStateRgbLED(String mqtt_topic)
 {
     Serial.println("publishStateRgbLED()");
 
@@ -195,7 +195,7 @@ void publishStateRgbLED()
     }
 
     root.printTo(jsonString);
-    mqttManager.publishMQTT(mqtt_status_led, jsonString.c_str());
+    mqttManager.publishMQTT(mqtt_topic, jsonString);
 }
 
 void onLuxChangeCallback(float lux)
@@ -207,7 +207,7 @@ void onLuxChangeCallback(float lux)
 void MQTTcallback(String topicString, String payloadString)
 {
     Serial.print("MQTTcallback(): ");
-    Serial.println(topicString.c_str());
+    Serial.println(topicString);
 
     if (topicString == mqtt_command_led)
     {
@@ -218,12 +218,12 @@ void MQTTcallback(String topicString, String payloadString)
         else
         {
             StaticJsonBuffer<200> jsonBuffer;
-            JsonObject& root = jsonBuffer.parseObject(payloadString.c_str());
+            JsonObject& root = jsonBuffer.parseObject(payloadString);
 
             if (root.containsKey("state"))
             {
                 String state = root["state"];
-                String stateString(state.c_str());
+                String stateString(state);
 
                 if (stateString == "ON")
                 {
@@ -253,7 +253,7 @@ void MQTTcallback(String topicString, String payloadString)
             }
         }
 
-        publishStateRgbLED();
+        publishStateRgbLED(mqtt_status_led);
     }
     else
     {
@@ -265,7 +265,8 @@ void shortPress()
 {
     Serial.println("button.shortPress()");
     rgbLED.commute();
-    publishStateRgbLED();
+    publishStateRgbLED(mqtt_status_led);
+    publishStateRgbLED(mqtt_command_led);
 }
 
 void longPress()
@@ -343,7 +344,7 @@ void setup()
 
     // Configure MQTT
     mqttManager.setCallback(MQTTcallback);
-    mqttManager.setup(mqtt_server, mqtt_port.c_str(), mqtt_username, mqtt_password);
+    mqttManager.setup(mqtt_server, mqtt_port, mqtt_username, mqtt_password);
     mqttManager.setDeviceData(device_name, HARDWARE, ip, FIRMWARE, FIRMWARE_VERSION);
     mqttManager.addSubscribeTopic(mqtt_command_led);
     mqttManager.addStatusTopic(mqtt_status_led);
