@@ -8,6 +8,7 @@
 #include "../lib/Button/Button.h"
 #include "../lib/DataManager/DataManager.h"
 #include "../lib/MqttManager/MqttManager.h"
+#include "../lib/MqttManager/MqttDiscoveryComponent.h"
 #include "../lib/PIR/PIR.h"
 #include "../lib/RgbLED/RgbLED.h"
 #include "../lib/TEMT6000/TEMT6000.h"
@@ -52,6 +53,11 @@ TEMT6000 temt6000;
 TimeWatchdog connectionWatchdog;
 UpdateManager updateManager;
 WifiManager wifiManager;
+MqttDiscoveryComponent* discoveryMotion;
+MqttDiscoveryComponent* discoveryHumidity;
+MqttDiscoveryComponent* discoveryTemperature;
+MqttDiscoveryComponent* discoveryIlluminance;
+MqttDiscoveryComponent* discoveryLed;
 
 
 String wifi_ssid = dataManager.get("wifi_ssid");
@@ -60,19 +66,29 @@ String ip = dataManager.get("ip");
 String mask = dataManager.get("mask");
 String gateway = dataManager.get("gateway");
 String ota_server = dataManager.get("ota_server");
+
 String mqtt_server = dataManager.get("mqtt_server");
 String mqtt_port = dataManager.get("mqtt_port");
 String mqtt_username = dataManager.get("mqtt_username");
 String mqtt_password = dataManager.get("mqtt_password");
+
 String device_name = dataManager.get("device_name");
+String discovery_prefix = dataManager.get("discovery_prefix");
+String motion_name = dataManager.get("motion_name");
+String humidity_name = dataManager.get("humidity_name");
+String temperature_name = dataManager.get("temperature_name");
+String illuminance_name = dataManager.get("illuminance_name");
+
+String mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
+String mqtt_status_motion = mqtt_status_sensors + "/motion";
+String mqtt_status_humidity = mqtt_status_sensors + "/humidity";
+String mqtt_status_temperature = mqtt_status_sensors + "/temperature";
+String mqtt_status_illuminance = mqtt_status_sensors + "/illuminance";
+
+String led_name = dataManager.get("led_name");
 String mqtt_status_led = dataManager.get("mqtt_status_led");
 String mqtt_command_led = mqtt_status_led + "/set";
 String mqtt_button_toggle = dataManager.get("mqtt_button_toggle");
-String mqtt_status_sensors = dataManager.get("mqtt_status_sensors");
-String mqtt_status_motion = mqtt_status_sensors + "/motion";
-String mqtt_status_temperature = mqtt_status_sensors + "/temperature";
-String mqtt_status_humidity = mqtt_status_sensors + "/humidity";
-String mqtt_status_illuminance = mqtt_status_sensors + "/illuminance";
 
 
 std::vector<std::pair<String, String>> getWebServerData()
@@ -125,16 +141,40 @@ std::vector<std::pair<String, String>> getWebServerData()
     generic_pair.second = device_name;
     webServerData.push_back(generic_pair);
 
+    generic_pair.first = "discovery_prefix";
+    generic_pair.second = discovery_prefix;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "motion_name";
+    generic_pair.second = motion_name;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "humidity_name";
+    generic_pair.second = humidity_name;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "temperature_name";
+    generic_pair.second = temperature_name;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "illuminance_name";
+    generic_pair.second = illuminance_name;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "mqtt_status_sensors";
+    generic_pair.second = mqtt_status_sensors;
+    webServerData.push_back(generic_pair);
+
+    generic_pair.first = "led_name";
+    generic_pair.second = led_name;
+    webServerData.push_back(generic_pair);
+
     generic_pair.first = "mqtt_status_led";
     generic_pair.second = mqtt_status_led;
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "mqtt_button_toggle";
     generic_pair.second = mqtt_button_toggle;
-    webServerData.push_back(generic_pair);
-
-    generic_pair.first = "mqtt_status_sensors";
-    generic_pair.second = mqtt_status_sensors;
     webServerData.push_back(generic_pair);
 
     generic_pair.first = "firmware_version";
@@ -159,15 +199,22 @@ void webServerSubmitCallback(std::map<String, String> inputFieldsContent)
     dataManager.set("mask", inputFieldsContent["mask"]);
     dataManager.set("gateway", inputFieldsContent["gateway"]);
     dataManager.set("ota_server", inputFieldsContent["ota_server"]);
+
     dataManager.set("mqtt_server", inputFieldsContent["mqtt_server"]);
     dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
     dataManager.set("mqtt_username", inputFieldsContent["mqtt_username"]);
     dataManager.set("mqtt_password", inputFieldsContent["mqtt_password"]);
+
     dataManager.set("device_name", inputFieldsContent["device_name"]);
-    dataManager.set("mqtt_port", inputFieldsContent["mqtt_port"]);
+    dataManager.set("discovery_prefix", inputFieldsContent["discovery_prefix"]);
+    dataManager.set("motion_name", inputFieldsContent["motion_name"]);
+    dataManager.set("device_name", inputFieldsContent["humidity_name"]);
+    dataManager.set("device_name", inputFieldsContent["temperature_name"]);
+    dataManager.set("device_name", inputFieldsContent["illuminance_name"]);
+    dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
+    dataManager.set("led_name", inputFieldsContent["led_name"]);
     dataManager.set("mqtt_status_led", inputFieldsContent["mqtt_status_led"]);
     dataManager.set("mqtt_button_toggle", inputFieldsContent["mqtt_button_toggle"]);
-    dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
 
     ESP.restart(); // Restart device with new config
 }
@@ -344,15 +391,8 @@ void setup()
 
     // Configure MQTT
     mqttManager.setCallback(MQTTcallback);
-    mqttManager.setup(mqtt_server, mqtt_port, mqtt_username, mqtt_password);
+    mqttManager.setup(mqtt_server, mqtt_port, mqtt_username, mqtt_password, true);
     mqttManager.setDeviceData(device_name, HARDWARE, ip, FIRMWARE, FIRMWARE_VERSION);
-    mqttManager.addSubscribeTopic(mqtt_command_led);
-    mqttManager.addStatusTopic(mqtt_status_led);
-    mqttManager.addStatusTopic(mqtt_status_motion);
-    mqttManager.addStatusTopic(mqtt_status_temperature);
-    mqttManager.addStatusTopic(mqtt_status_humidity);
-    mqttManager.addStatusTopic(mqtt_status_illuminance);
-    mqttManager.startConnection();
 
     //Configure WebServer
     WebServer::getInstance().setup("/index.html.gz", webServerSubmitCallback);
@@ -375,6 +415,47 @@ void setup()
     //Configure DHT
     dht.begin();
     dhtTimer.setup(RT_ON, 30000);
+
+    // Configure MQTT Discovery
+    discoveryMotion = new MqttDiscoveryComponent("binary_sensor", motion_name);
+    discoveryMotion->discovery_prefix = discovery_prefix;
+    discoveryMotion->setConfigurtionVariable("device_class", "motion");
+    discoveryMotion->setConfigurtionVariable("state_topic", mqtt_status_motion);
+    discoveryMotion->setConfigurtionVariable("qos", "1");
+    mqttManager.addDiscoveryComponent(discoveryMotion);
+
+    discoveryHumidity = new MqttDiscoveryComponent("sensor", humidity_name);
+    discoveryHumidity->discovery_prefix = discovery_prefix;
+    discoveryHumidity->setConfigurtionVariable("state_topic", mqtt_status_humidity);
+    discoveryHumidity->setConfigurtionVariable("qos", "1");
+    discoveryHumidity->setConfigurtionVariable("unit_of_measurement", "%");
+    mqttManager.addDiscoveryComponent(discoveryHumidity);
+
+    discoveryTemperature = new MqttDiscoveryComponent("sensor", temperature_name);
+    discoveryTemperature->discovery_prefix = discovery_prefix;
+    discoveryTemperature->setConfigurtionVariable("state_topic", mqtt_status_temperature);
+    discoveryTemperature->setConfigurtionVariable("qos", "1");
+    discoveryTemperature->setConfigurtionVariable("unit_of_measurement", "ºC");
+    mqttManager.addDiscoveryComponent(discoveryTemperature);
+
+    discoveryIlluminance = new MqttDiscoveryComponent("sensor", illuminance_name);
+    discoveryIlluminance->discovery_prefix = discovery_prefix;
+    discoveryIlluminance->setConfigurtionVariable("state_topic", mqtt_status_illuminance);
+    discoveryIlluminance->setConfigurtionVariable("qos", "1");
+    discoveryIlluminance->setConfigurtionVariable("unit_of_measurement", "lx");
+    mqttManager.addDiscoveryComponent(discoveryIlluminance);
+
+    discoveryLed = new MqttDiscoveryComponent("light", led_name);
+    discoveryLed->discovery_prefix = discovery_prefix;
+    discoveryLed->setConfigurtionVariable("command_topic", mqtt_command_led);
+    discoveryLed->setConfigurtionVariable("state_topic", mqtt_status_led);
+    discoveryLed->setConfigurtionVariable("rgb", "true");
+    discoveryLed->setConfigurtionVariable("brightness", "true");
+    discoveryLed->setConfigurtionVariable("qos", "1");
+    discoveryLed->setConfigurtionVariable("retain", "true");
+    mqttManager.addDiscoveryComponent(discoveryLed);
+
+    mqttManager.startConnection();
 }
 
 void loop()

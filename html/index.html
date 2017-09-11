@@ -72,7 +72,35 @@
         <tbody>
             <tr>
                 <td style="width: 275px; text-align: right;">Device Name:</td>
-                <td style="width: 275px; text-align: left;"><input maxlength="15" name="device_name" size="30" type="text" id="device_name" /></td>
+                <td style="width: 275px; text-align: left;"><input maxlength="20" name="device_name" size="30" type="text" id="device_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">Discovery Prefix:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="20" name="discovery_prefix" size="30" type="text" id="discovery_prefix" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">Motion Sensor Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="motion_name" size="30" type="text" id="motion_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">Humidity Sensor Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="humidity_name" size="30" type="text" id="humidity_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">Temperature Sensor Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="temperature_name" size="30" type="text" id="temperature_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">Illuminance Sensor Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="illuminance_name" size="30" type="text" id="illuminance_name" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">MQTT Sensors State Topic:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_sensors" size="30" type="text" id="mqtt_status_sensors" /></td>
+            </tr>
+            <tr>
+                <td style="width: 275px; text-align: right;">RGB LED Name:</td>
+                <td style="width: 275px; text-align: left;"><input maxlength="40" name="led_name" size="30" type="text" id="led_name" /></td>
             </tr>
             <tr>
                 <td style="width: 275px; text-align: right;">MQTT Status RGB LED:</td>
@@ -81,10 +109,6 @@
             <tr>
                 <td style="width: 275px; text-align: right;">MQTT Button Toggle:</td>
                 <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_button_toggle" size="30" type="text" id="mqtt_button_toggle" /></td>
-            </tr>
-            <tr>
-                <td style="width: 275px; text-align: right;">MQTT Status Sensors:</td>
-                <td style="width: 275px; text-align: left;"><input maxlength="40" name="mqtt_status_sensors" size="30" type="text" id="mqtt_status_sensors" /></td>
             </tr>
             <script>
 
@@ -110,6 +134,7 @@
 	                    document.getElementById("ip").value = data.ip;
 	                    document.getElementById("gateway").value = data.gateway;
 	                    document.getElementById("mask").value = data.mask;
+	                    document.getElementById("ota_server").value = data.ota_server;
 
 	                    document.getElementById("mqtt_server").value = data.mqtt_server;
 	                    document.getElementById("mqtt_port").value = data.mqtt_port;
@@ -117,10 +142,15 @@
 	                    document.getElementById("mqtt_password").value = data.mqtt_password;
 	                
 	                    document.getElementById("device_name").value = data.device_name;
-	                    document.getElementById("ota_server").value = data.ota_server;
+	                    document.getElementById("discovery_prefix").value = data.discovery_prefix;
+	                    document.getElementById("motion_name").value = data.motion_name;
+	                    document.getElementById("humidity_name").value = data.humidity_name;
+	                    document.getElementById("temperature_name").value = data.temperature_name;
+	                    document.getElementById("illuminance_name").value = data.illuminance_name;
+	                    document.getElementById("mqtt_status_sensors").value = data.mqtt_status_sensors;
+	                    document.getElementById("rgbled_name").value = data.rgbled_name;
 	                    document.getElementById("mqtt_status_led").value = data.mqtt_status_led;
 	                    document.getElementById("mqtt_button_toggle").value = data.mqtt_button_toggle;
-                        document.getElementById("mqtt_status_sensors").value = data.mqtt_status_sensors;
 
 	                    document.getElementById("firmware_version").innerHTML = data.firmware_version;
                         document.getElementById("hardware").innerHTML = data.hardware;
