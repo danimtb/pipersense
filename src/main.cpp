@@ -46,7 +46,7 @@ Button button;
 DataManager dataManager;
 DHT dht(DHT_PIN, DHT22);
 MqttManager mqttManager;
-PIR pir(PIR_PIN, 300000);
+PIR pir(PIR_PIN, 0);
 RgbLED rgbLED;
 SimpleTimer dhtTimer;
 TEMT6000 temt6000;
@@ -208,9 +208,9 @@ void webServerSubmitCallback(std::map<String, String> inputFieldsContent)
     dataManager.set("device_name", inputFieldsContent["device_name"]);
     dataManager.set("discovery_prefix", inputFieldsContent["discovery_prefix"]);
     dataManager.set("motion_name", inputFieldsContent["motion_name"]);
-    dataManager.set("device_name", inputFieldsContent["humidity_name"]);
-    dataManager.set("device_name", inputFieldsContent["temperature_name"]);
-    dataManager.set("device_name", inputFieldsContent["illuminance_name"]);
+    dataManager.set("humidity_name", inputFieldsContent["humidity_name"]);
+    dataManager.set("temperature_name", inputFieldsContent["temperature_name"]);
+    dataManager.set("illuminance_name", inputFieldsContent["illuminance_name"]);
     dataManager.set("mqtt_status_sensors", inputFieldsContent["mqtt_status_sensors"]);
     dataManager.set("led_name", inputFieldsContent["led_name"]);
     dataManager.set("mqtt_status_led", inputFieldsContent["mqtt_status_led"]);
@@ -383,7 +383,7 @@ void setup()
 
     // Configure TEMT6000
     temt6000.setup(LDR_PIN, 3.3);
-    temt6000.setOnChangeCallback(onLuxChangeCallback, 30000);
+    temt6000.setOnChangeCallback(onLuxChangeCallback, 10000);
 
     // Configure Wifi
     wifiManager.setup(wifi_ssid, wifi_password, ip, mask, gateway, HARDWARE);
@@ -447,10 +447,10 @@ void setup()
 
     discoveryLed = new MqttDiscoveryComponent("light", led_name);
     discoveryLed->discovery_prefix = discovery_prefix;
+    discoveryLed->setConfigurtionVariable("platform", "mqtt_json");
     discoveryLed->setConfigurtionVariable("command_topic", mqtt_command_led);
     discoveryLed->setConfigurtionVariable("state_topic", mqtt_status_led);
     discoveryLed->setConfigurtionVariable("rgb", "true");
-    discoveryLed->setConfigurtionVariable("brightness", "true");
     discoveryLed->setConfigurtionVariable("qos", "1");
     discoveryLed->setConfigurtionVariable("retain", "true");
     mqttManager.addDiscoveryComponent(discoveryLed);
