@@ -8,3 +8,4 @@ lib/readme.txt
 *.pro
 *.autosave
 env
+.vscode

@@ -41,7 +41,11 @@
 
 //################## ============ ##################
 
-
+MqttDiscoveryComponent discoveryMotion;
+MqttDiscoveryComponent discoveryHumidity;
+MqttDiscoveryComponent discoveryTemperature;
+MqttDiscoveryComponent discoveryIlluminance;
+MqttDiscoveryComponent discoveryLed;
 Button button;
 DataManager dataManager;
 DHT dht(DHT_PIN, DHT22);
@@ -53,11 +57,6 @@ TEMT6000 temt6000;
 TimeWatchdog connectionWatchdog;
 UpdateManager updateManager;
 WifiManager wifiManager;
-MqttDiscoveryComponent* discoveryMotion;
-MqttDiscoveryComponent* discoveryHumidity;
-MqttDiscoveryComponent* discoveryTemperature;
-MqttDiscoveryComponent* discoveryIlluminance;
-MqttDiscoveryComponent* discoveryLed;
 
 
 String wifi_ssid = dataManager.get("wifi_ssid");
@@ -391,7 +390,7 @@ void setup()
 
     // Configure MQTT
     mqttManager.setCallback(MQTTcallback);
-    mqttManager.setup(mqtt_server, mqtt_port, mqtt_username, mqtt_password, true);
+    mqttManager.setup(mqtt_server, mqtt_port, mqtt_username, mqtt_password);
     mqttManager.setDeviceData(device_name, HARDWARE, ip, FIRMWARE, FIRMWARE_VERSION);
 
     //Configure WebServer
@@ -417,42 +416,42 @@ void setup()
     dhtTimer.setup(RT_ON, 30000);
 
     // Configure MQTT Discovery
-    discoveryMotion = new MqttDiscoveryComponent("binary_sensor", motion_name);
-    discoveryMotion->discovery_prefix = discovery_prefix;
-    discoveryMotion->setConfigurtionVariable("device_class", "motion");
-    discoveryMotion->setConfigurtionVariable("state_topic", mqtt_status_motion);
-    discoveryMotion->setConfigurtionVariable("qos", "1");
+    discoveryMotion = MqttDiscoveryComponent("binary_sensor", motion_name);
+    discoveryMotion.discovery_prefix = discovery_prefix;
+    discoveryMotion.setConfigurtionVariable("device_class", "motion");
+    discoveryMotion.setConfigurtionVariable("state_topic", mqtt_status_motion);
+    discoveryMotion.setConfigurtionVariable("qos", "1");
     mqttManager.addDiscoveryComponent(discoveryMotion);
 
-    discoveryHumidity = new MqttDiscoveryComponent("sensor", humidity_name);
-    discoveryHumidity->discovery_prefix = discovery_prefix;
-    discoveryHumidity->setConfigurtionVariable("state_topic", mqtt_status_humidity);
-    discoveryHumidity->setConfigurtionVariable("qos", "1");
-    discoveryHumidity->setConfigurtionVariable("unit_of_measurement", "%");
+    discoveryHumidity = MqttDiscoveryComponent("sensor", humidity_name);
+    discoveryHumidity.discovery_prefix = discovery_prefix;
+    discoveryHumidity.setConfigurtionVariable("state_topic", mqtt_status_humidity);
+    discoveryHumidity.setConfigurtionVariable("qos", "1");
+    discoveryHumidity.setConfigurtionVariable("unit_of_measurement", "%");
     mqttManager.addDiscoveryComponent(discoveryHumidity);
 
-    discoveryTemperature = new MqttDiscoveryComponent("sensor", temperature_name);
-    discoveryTemperature->discovery_prefix = discovery_prefix;
-    discoveryTemperature->setConfigurtionVariable("state_topic", mqtt_status_temperature);
-    discoveryTemperature->setConfigurtionVariable("qos", "1");
-    discoveryTemperature->setConfigurtionVariable("unit_of_measurement", "ºC");
+    discoveryTemperature = MqttDiscoveryComponent("sensor", temperature_name);
+    discoveryTemperature.discovery_prefix = discovery_prefix;
+    discoveryTemperature.setConfigurtionVariable("state_topic", mqtt_status_temperature);
+    discoveryTemperature.setConfigurtionVariable("qos", "1");
+    discoveryTemperature.setConfigurtionVariable("unit_of_measurement", "ºC");
     mqttManager.addDiscoveryComponent(discoveryTemperature);
 
-    discoveryIlluminance = new MqttDiscoveryComponent("sensor", illuminance_name);
-    discoveryIlluminance->discovery_prefix = discovery_prefix;
-    discoveryIlluminance->setConfigurtionVariable("state_topic", mqtt_status_illuminance);
-    discoveryIlluminance->setConfigurtionVariable("qos", "1");
-    discoveryIlluminance->setConfigurtionVariable("unit_of_measurement", "lx");
+    discoveryIlluminance = MqttDiscoveryComponent("sensor", illuminance_name);
+    discoveryIlluminance.discovery_prefix = discovery_prefix;
+    discoveryIlluminance.setConfigurtionVariable("state_topic", mqtt_status_illuminance);
+    discoveryIlluminance.setConfigurtionVariable("qos", "1");
+    discoveryIlluminance.setConfigurtionVariable("unit_of_measurement", "lx");
     mqttManager.addDiscoveryComponent(discoveryIlluminance);
 
-    discoveryLed = new MqttDiscoveryComponent("light", led_name);
-    discoveryLed->discovery_prefix = discovery_prefix;
-    discoveryLed->setConfigurtionVariable("platform", "mqtt_json");
-    discoveryLed->setConfigurtionVariable("command_topic", mqtt_command_led);
-    discoveryLed->setConfigurtionVariable("state_topic", mqtt_status_led);
-    discoveryLed->setConfigurtionVariable("rgb", "true");
-    discoveryLed->setConfigurtionVariable("qos", "1");
-    discoveryLed->setConfigurtionVariable("retain", "true");
+    discoveryLed = MqttDiscoveryComponent("light", led_name);
+    discoveryLed.discovery_prefix = discovery_prefix;
+    discoveryLed.setConfigurtionVariable("platform", "mqtt_json");
+    discoveryLed.setConfigurtionVariable("command_topic", mqtt_command_led);
+    discoveryLed.setConfigurtionVariable("state_topic", mqtt_status_led);
+    discoveryLed.setConfigurtionVariable("rgb", "true");
+    discoveryLed.setConfigurtionVariable("qos", "1");
+    discoveryLed.setConfigurtionVariable("retain", "true");
     mqttManager.addDiscoveryComponent(discoveryLed);
 
     mqttManager.startConnection();
